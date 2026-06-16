@@ -1,0 +1,9 @@
+node_modules/
+dist/
+sessions.sqlite
+.env
+announcement.md
+/.claude
+.codetb-index.json
+.codetb-cache.md
+/.codetb-cache

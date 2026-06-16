@@ -6,8 +6,6 @@ import { getReport, updateReportStatus, ReportStatus } from "../utils/reportsSto
 
 export const ownerReplyHandler = new Composer<MyContext>();
 
-// /reply RPT-XXXX message — send reply to user by report ID
-// OR reply to report message with: /reply message (no ID needed)
 ownerReplyHandler.command("reply", async (ctx) => {
   if (ctx.from?.id !== env.OWNER_CHAT_ID) return;
 
@@ -18,7 +16,6 @@ ownerReplyHandler.command("reply", async (ctx) => {
   let reportId: string | undefined;
   let messageText: string;
 
-  // Check if replying to a report message (no ID needed)
   if (replyTo) {
     const textToParse = replyTo.text || replyTo.caption || "";
     const match = textToParse.match(/RPT-[A-Z0-9]+/);
@@ -30,7 +27,6 @@ ownerReplyHandler.command("reply", async (ctx) => {
       return;
     }
   } else {
-    // /reply RPT-XXXX message text
     const match = withoutCommand.match(/^(RPT-[A-Z0-9]+)\s+(.+)/s);
     if (!match) {
       await ctx.reply("Usage:\n• /reply RPT-XXXX Your message here\n• Or reply to a report message with: /reply Your message");
@@ -64,8 +60,6 @@ ownerReplyHandler.command("reply", async (ctx) => {
   }
 });
 
-// /changestatus RPT-XXXX — shows status buttons
-// OR reply to report message with: /changestatus (no ID needed)
 ownerReplyHandler.command("changestatus", async (ctx) => {
   if (ctx.from?.id !== env.OWNER_CHAT_ID) return;
 
@@ -108,7 +102,6 @@ ownerReplyHandler.command("changestatus", async (ctx) => {
   );
 });
 
-// Handle status change buttons
 ownerReplyHandler.callbackQuery(/^status_(RPT-[A-Z0-9]+)_(.+)$/, async (ctx) => {
   if (ctx.from?.id !== env.OWNER_CHAT_ID) {
     return ctx.answerCallbackQuery({ text: "Only the owner can do this.", show_alert: true });
@@ -130,22 +123,20 @@ ownerReplyHandler.callbackQuery(/^status_(RPT-[A-Z0-9]+)_(.+)$/, async (ctx) => 
     closed: "\u{274C} Closed",
   };
 
-  // Notify the user
   try {
     await ctx.api.sendMessage(report.user_id,
       `\u{1F4CB} <b>Report Update</b> (<code>${reportId}</code>)\n\nStatus changed to: <b>${statusLabels[newStatus] || newStatus}</b>`,
       { parse_mode: "HTML" }
     );
   } catch {
-    // User may have blocked the bot
+	  
   }
 
-  // If "closed" — delete the report message from owner's chat
   if (newStatus === "closed" && report.owner_message_id) {
     try {
       await ctx.api.deleteMessage(env.OWNER_CHAT_ID, report.owner_message_id);
     } catch {
-      // Message might already be deleted
+
     }
   }
 
@@ -156,7 +147,6 @@ ownerReplyHandler.callbackQuery(/^status_(RPT-[A-Z0-9]+)_(.+)$/, async (ctx) => 
   );
 });
 
-// Fallback: owner replies to a report message directly (without /reply command)
 ownerReplyHandler.on("message", async (ctx, next) => {
   if (ctx.from?.id !== env.OWNER_CHAT_ID) {
     return next();
@@ -167,7 +157,6 @@ ownerReplyHandler.on("message", async (ctx, next) => {
     return next();
   }
 
-  // Skip if it's a command (handled above)
   if (ctx.message.text?.startsWith("/")) {
     return next();
   }
